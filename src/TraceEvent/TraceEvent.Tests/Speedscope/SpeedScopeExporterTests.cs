@@ -158,7 +158,7 @@ namespace TraceEventTests
 
             for (double i = startTime; i <= endTime; i += metric)
             {
-                currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: i, (float)metric, depth: 0, frameId: 0));
+                currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: i, (float)metric, depth: 0, frameId: 0));
                 HandleSamples(previousSamples, currentSamples, results);
                 metricSum += (float) metric;
             }
@@ -183,11 +183,11 @@ namespace TraceEventTests
             const float metric = 0.01f;
 
             // lasts from <0.0, 0.01>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: 0, frameId: 0));
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: 0, frameId: 0));
             HandleSamples(previousSamples, currentSamples, results);
 
             // lasts from <1.0, 1.01>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: 0, frameId: 0));
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: 0, frameId: 0));
             HandleSamples(previousSamples, currentSamples, results);
 
             Assert.Equal(ProfileEventType.Open, results[0].Type);
@@ -213,11 +213,11 @@ namespace TraceEventTests
             const int firstDepth = 0, secondDepth = 1;
 
             // lasts from <0.0, 0.01>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: firstDepth, frameId: 0));
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: firstDepth, frameId: 0));
             HandleSamples(previousSamples, currentSamples, results);
 
             // lasts from <0.01, 0.02>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: secondDepth, frameId: 0)); // depth change
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: secondDepth, frameId: 0)); // depth change
             HandleSamples(previousSamples, currentSamples, results);
 
             Assert.Equal(ProfileEventType.Open, results[0].Type);
@@ -246,11 +246,11 @@ namespace TraceEventTests
             const int firstFrameId = 0, secondFrameId = 1;
 
             // lasts from <0.0, 0.01>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: 0, frameId: firstFrameId));
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: firstTime, metric, depth: 0, frameId: firstFrameId));
             HandleSamples(previousSamples, currentSamples, results);
 
             // lasts from <0.01, 0.02>
-            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: 0, frameId: secondFrameId)); // frameId change
+            currentSamples.Add(new Sample((StackSourceCallStackIndex)1, (StackSourceCallStackIndex)1, relativeTime: secondTime, metric, depth: 0, frameId: secondFrameId)); // frameId change
             HandleSamples(previousSamples, currentSamples, results);
 
             Assert.Equal(ProfileEventType.Open, results[0].Type);

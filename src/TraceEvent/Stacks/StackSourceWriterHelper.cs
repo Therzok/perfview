@@ -39,12 +39,12 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
                         ? "Unknown"
                         : stackSource.GetFrameName(stackSource.GetFrameIndex(processStackIndex), false);
 
-                    var threadInfo = new ThreadInfo(frameName, processFrameName);
+                    var threadInfo = new ThreadInfo("Thread (-1)", processFrameName);
 
                     if (!samplesPerThread.TryGetValue(threadInfo, out var samples))
                         samplesPerThread[threadInfo] = samples = new List<Sample>();
 
-                    samples.Add(new Sample(sample.StackIndex, sample.TimeRelativeMSec, sample.Metric, -1, -1));
+                    samples.Add(new Sample(sample.StackIndex, stackIndex, sample.TimeRelativeMSec, sample.Metric, -1, -1));
 
                     return;
                 }
@@ -80,9 +80,15 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
             {
                 // walk the stack first
                 var stackIndex = leafSample.StackIndex;
+                var threadIndex = leafSample.ThreadIndex;
+
+                stackIndexesToHandle.Push(threadIndex);
                 while (stackIndex != StackSourceCallStackIndex.Invalid)
                 {
-                    stackIndexesToHandle.Push(stackIndex);
+                    if (stackIndex != threadIndex)
+                    {
+                        stackIndexesToHandle.Push(stackIndex);
+                    }
 
                     stackIndex = stackSource.GetCallerIndex(stackIndex);
                 }
@@ -107,7 +113,7 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
                         exportedFrameNameToExportedFrameId.Add(frameName, exportedFrameId = exportedFrameNameToExportedFrameId.Count);
 
                     // the time and metric are the same as for the leaf sample
-                    currentSamples.Add(new Sample(stackIndex, leafSample.RelativeTime, leafSample.Metric, depth, exportedFrameId));
+                    currentSamples.Add(new Sample(leafSample.ThreadIndex, leafSample.ThreadIndex, leafSample.RelativeTime, leafSample.Metric, depth, exportedFrameId));
 
                     if (!exportedFrameIdToExportedNameAndCallerId.ContainsKey(exportedFrameId))
                     {
@@ -266,6 +272,8 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
                 return true;
             if (left.FrameId != right.FrameId)
                 return true;
+            if (left.ThreadIndex != right.ThreadIndex)
+                return true;
 
             return left.RelativeTime + (left.Metric * 1.001) < right.RelativeTime;
         }
@@ -308,9 +316,10 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
 
         internal readonly struct Sample
         {
-            internal Sample(StackSourceCallStackIndex stackIndex, double relativeTime, float metric, int depth, int frameId)
+            internal Sample(StackSourceCallStackIndex stackIndex, StackSourceCallStackIndex threadIndex, double relativeTime, float metric, int depth, int frameId)
             {
                 StackIndex = stackIndex;
+                ThreadIndex = threadIndex;
                 RelativeTime = relativeTime;
                 Metric = metric;
                 Depth = depth;
@@ -319,10 +328,11 @@ namespace Microsoft.Diagnostics.Tracing.Stacks
 
             public override string ToString() => RelativeTime.ToString(CultureInfo.InvariantCulture);
 
-            internal Sample IncreaseDuration(float metric) => new Sample(StackIndex, RelativeTime, Metric + metric, Depth, FrameId);
+            internal Sample IncreaseDuration(float metric) => new Sample(StackIndex, ThreadIndex, RelativeTime, Metric + metric, Depth, FrameId);
 
             #region private
             internal StackSourceCallStackIndex StackIndex { get; }
+            internal StackSourceCallStackIndex ThreadIndex { get; }
             internal double RelativeTime { get; }
             internal float Metric { get; }
             internal int Depth { get; }
